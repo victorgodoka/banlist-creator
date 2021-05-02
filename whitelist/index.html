@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <!--Import Google Icon Font-->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!--Import materialize.css-->
+  <link type="text/css" rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" media="screen,projection" />
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" />
+
+  <title>YGOProdeck Collection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" href="yugioh.ico" type="image/x-icon" />
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+      font-size: 16px;
+    }
+
+    main {
+      flex: 1 0 auto;
+    }
+
+    .align-right {
+      width: 100%;
+      text-align: right;
+    }
+
+    .loading__wrapper {
+      position: absolute;
+      z-index: 2;
+      background-color: rgba(0, 0, 0, .65);
+      top: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    .form {
+      margin: 20px 0;
+    }
+
+    .warning {
+      padding: 20px;
+      margin: 0;
+    }
+
+    .warning__text {
+      padding: 0;
+      margin: 0;
+      display: inline-block;
+      color: #fafafa;
+    }
+
+    .warning pre {
+      font-family: monospace;
+      display: inline;
+      padding: 3px 4px;
+    }
+
+    .bold {
+      font-weight: bold;
+    }
+
+    .banlist {
+      font-family: monospace;
+      line-height: 2;
+      background-color: rgba(0, 0, 0, .1);
+      padding: 20px;
+      width: 100%;
+      list-style: none;
+      border: 1px dashed rgba(0, 0, 0, .65);
+    }
+
+    .disclaimer {
+      margin-bottom: 20px;
+    }
+
+    .disclaimer__text {
+      font-family: monospace;
+      line-height: 2;
+      font-size: .65rem;
+    }
+
+    .container {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="warning purple darken-3 z-depth-2">
+    <div class="warning__text">Banlist
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="loading__wrapper">
+      <div class="preloader-wrapper active">
+        <div class="spinner-layer spinner-red-only">
+          <div class="circle-clipper left">
+            <div class="circle"></div>
+          </div>
+          <div class="gap-patch">
+            <div class="circle"></div>
+          </div>
+          <div class="circle-clipper right">
+            <div class="circle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <form class="col s12" id="form">
+        <div class="row">
+          <div class="input-field col s12 m5">
+            <textarea id="bannedcards" class="materialize-textarea"></textarea>
+            <label for="bannedcards">Banned Cards</label>
+          </div>
+          <div class="input-field col s12 m5">
+            <textarea id="cardsets" class="materialize-textarea"></textarea>
+            <label for="cardsets">Banned Cards</label>
+          </div>
+          <button class="waves-effect waves-light col s12 m1 btn" type="submit">Add</button>
+        </div>
+      </form>
+    </div>
+
+    <ul class="browser-default banlist" id="list">
+
+    </ul>
+  </main>
+
+  <footer class="page-footer purple darken-3 z-depth-2">
+    <div class="container disclaimer">
+      <div class="disclaimer__text purple-text text-lighten-3 flow-text">Made using <a
+          class="purple-text text-lighten-5" href="https://ygoprodeck.com" target="_blank">YGOPRODeck.com API</a>.</div>
+      <div class="disclaimer__text purple-text text-lighten-3 flow-text">The literal and graphical information presented
+        on this site about
+        Yu-Gi-Oh!, including
+        card images, the
+        attribute, level/rank and type symbols, and card text, is copyright 4K Media Inc, a subsidiary of Konami
+        Digital
+        Entertainment, Inc. This website is not produced by, endorsed by, supported by, or affiliated with 4k Media or
+        Konami Digital Entertainment.</div>
+    </div>
+    <div class="footer-copyright">
+      <div class="container align-right">
+        © <span id="current-year"></span>
+        <a class="grey-text text-lighten-4" href="https://twitter.com/victorgodoka" target="_blank">@victorgodoka</a>
+      </div>
+    </div>
+  </footer>
+  <!--JavaScript at end of body for optimized loading-->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js">
+  </script>
+
+  <script>
+    function loadAllCards(set, cb) {
+      return fetch('https://db.ygoprodeck.com/api/v7/cardinfo.php')
+        .then(res => res.json())
+        .then(({
+          data
+        }) => set(data))
+        .finally(() => cb())
+    }
+
+    function toggleLoading() {
+      document.querySelector('.loading__wrapper').classList.toggle('hide');
+    }
+
+    function setCards(cards) {
+      window.fullCards = cards;
+    }
+
+    document.addEventListener("DOMContentLoaded", function (event) {
+      loadAllCards(setCards, toggleLoading)
+      document.querySelector("#current-year").innerHTML = new Date().getFullYear()
+      document.querySelector("#form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        var bannedCards = document.querySelector("#bannedcards").value.split("\n")
+        var validSets = document.querySelector("#cardsets").value.split("\n")
+
+        var unlimited = window.fullCards.filter(x => bannedCards.indexOf(x.id) === -1).map(x => x.card_sets ? x
+          .card_sets.find(x => validSets.indexOf(x.set_name) !== -1) ? x.id + " 3 --" + x.name : false : false
+        ).filter(Boolean)
+        document.querySelector("#list").innerHTML = unlimited.map(card => "<li>" + card + "</li>").join("")
+      })
+    });
+  </script>
+</body>
+
+</html>
