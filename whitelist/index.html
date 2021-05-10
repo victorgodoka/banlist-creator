@@ -191,9 +191,9 @@
       document.querySelector("#form").addEventListener("submit", (e) => {
         e.preventDefault();
         var bannedCards = document.querySelector("#bannedcards").value.split("\n")
-        var validSets = document.querySelector("#cardsets").value.split("\n")
+        var validSets = document.querySelector("#cardsets").value.split("\n").map(x => x.trim())
 
-        var unlimited = window.fullCards.filter(x => bannedCards.indexOf(x.id) === -1).map(x => x.card_sets ? x
+        var unlimited = window.fullCards.filter(x => bannedCards.indexOf(x.id.toString()) === -1).map(x => x.card_sets ? x
           .card_sets.find(x => validSets.indexOf(x.set_name) !== -1) ? x.id + " 3 --" + x.name : false : false
         ).filter(Boolean)
         document.querySelector("#list").innerHTML = unlimited.map(card => "<li>" + card + "</li>").join("")
